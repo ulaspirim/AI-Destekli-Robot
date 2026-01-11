@@ -139,3 +139,6 @@ Mobil uygulama, yapay zekâ karar mekanizmasının merkezinde yer almakta ve rob
 ## Sonuç
 
 Bu proje, yapay zeka ile robotik sistemlerin bütünleşik çalışmasını hedefleyen, gerçek dünya senaryolarına uygulanabilir bir **akıllı robot prototipi** ortaya koymayı amaçlamaktadır.
+
+<img width="1600" height="171" alt="image" src="https://github.com/user-attachments/assets/acd3e40c-9535-4c88-a0bf-cd328283fd50" />
+
