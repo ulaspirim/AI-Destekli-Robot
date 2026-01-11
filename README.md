@@ -72,6 +72,7 @@ Mobil uygulama, yapay zekâ karar mekanizmasının merkezinde yer almakta ve rob
 * **Text-to-Speech** – Robotun konuşması
 * **Dialogflow / Gemini AI** – Doğal dil işleme ve karar verme
 * **TensorFlow Lite** – Cihaz üzerinde çalışan AI modelleri
+* **Firebase** - Yüzlerin veri tabanına kaydedilmesi
 
 ### Donanım
 
