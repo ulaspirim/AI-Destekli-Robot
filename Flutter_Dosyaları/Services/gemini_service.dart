@@ -4,23 +4,26 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 
 const String VERTEX_PROJECT_ID = 'flutterprojem-482419';
-const String VERTEX_LOCATION = 'europe-west1';
+const String VERTEX_LOCATION = 'us-central1';
 const String VERTEX_MODEL = 'gemini-2.5-flash'; 
 
 class GeminiService {
   auth.AutoRefreshingAuthClient? _client;
   List<Map<String, dynamic>> _chatHistory = [];
 
-  Future<void> initialize(AssetBundle assetBundle) async {
+  Future<bool> initialize(AssetBundle assetBundle) async {
     try {
       final serviceAccountJson = await assetBundle.loadString('assets/service_account.json');
       final Map<String, dynamic> serviceAccount = jsonDecode(serviceAccountJson);
       final credentials = auth.ServiceAccountCredentials.fromJson(serviceAccount);
       final scopes = ['https://www.googleapis.com/auth/cloud-platform'];
       _client = await auth.clientViaServiceAccount(credentials, scopes);
-      print("✅ Vertex AI servisi başlatıldı.");
+      print("✅ Vertex AI servisi başarıyla başlatıldı.");
+      return true; // Başarılı
     } catch (e) {
-      print("❌ Vertex AI başlatma hatası: $e");
+      print("❌ Vertex AI KRİTİK HATA: Dosya okunamadı veya JSON hatalı!");
+      print("Hata detayı: $e");
+      return false; // Başarısız
     }
   }
 
