@@ -121,18 +121,25 @@ class _AiTestScreenState extends State<AiTestScreen> {
 
   Future<void> _initializeAll() async {
     await _requestPermissions();
+    
     if (mounted) {
-      await _geminiService.initialize(DefaultAssetBundle.of(context));
-      // Bina bilgisini Gemini'ye öğret
-      _geminiService.setSystemContext(_buildingContext);
+      // Değişiklik: Başlatma sonucunu kontrol et
+      bool isGeminiReady = await _geminiService.initialize(DefaultAssetBundle.of(context));
+      
+      if (isGeminiReady) {
+        _geminiService.setSystemContext(_buildingContext);
+        setState(() => _statusMessage = "Yapay Zeka Hazır.");
+      } else {
+        setState(() => _statusMessage = "HATA: Gemini Başlatılamadı! (JSON Dosyasını Kontrol Et)");
+        // Sesli uyarı ver ki hatayı duy
+        await _voiceService.speak("Sistem hatası. Yapay zeka anahtarı bulunamadı.");
+      }
     }
     
     _visionService.init();
     await _voiceService.init();
     _initBluetooth();
     await _initializeCamera();
-    
-    if (mounted) setState(() => _statusMessage = "Hazır. Arduino'ya Bağlanın.");
   }
 
   Future<void> _initializeCamera() async {
@@ -278,10 +285,24 @@ class _AiTestScreenState extends State<AiTestScreen> {
       }
       
       _moveRobot(command, durationMs: durationMs);
-
     } catch (e) {
       print("Navigasyon Hatası: $e");
       _moveRobot("dur");
+      // Eğer hata metninde 429 geçiyorsa
+      if (e.toString().contains("429")) {
+        print("⚠️ KOTA AŞIMI! Robot 1 dakika dinleniyor...");
+        _voiceService.speak("Çok yoruldum, sistemlerimi soğutuyorum.");
+        
+        // Geçici olarak devriyeyi durdur
+        _patrolLoopTimer?.cancel();
+        
+        // 1 dakika sonra tekrar başlat
+        Future.delayed(const Duration(minutes: 1), () {
+          _startPatrolLoop();
+        });
+      } else {
+        print("Hata oluştu: $e");
+      }
     }
   }
 
@@ -345,7 +366,8 @@ class _AiTestScreenState extends State<AiTestScreen> {
        return;
     }
 
-    List<double> realEmbedding = _generateFaceFingerprint(detectedFace);
+    List<double> realEmbedding =
+    await _faceService.getFaceEmbedding(imagePath, detectedFace);
 
     if (realEmbedding.isEmpty) {
        await _voiceService.speak("Yüzünü netleştiremedim, biraz yaklaşır mısın?");
@@ -523,39 +545,8 @@ class _AiTestScreenState extends State<AiTestScreen> {
   }
 
   // --- YÜZ İMZASI OLUŞTURUCU ---
-  List<double> _generateFaceFingerprint(Face face) {
-    // Eğer gerekli noktalar okunamadıysa boş liste dön (Hata önleyici)
-    if (face.landmarks[FaceLandmarkType.leftEye] == null ||
-        face.landmarks[FaceLandmarkType.rightEye] == null ||
-        face.landmarks[FaceLandmarkType.noseBase] == null ||
-        face.landmarks[FaceLandmarkType.bottomMouth] == null) {
-      return [];
-    }
 
-    final leftEye = face.landmarks[FaceLandmarkType.leftEye]!.position;
-    final rightEye = face.landmarks[FaceLandmarkType.rightEye]!.position;
-    final nose = face.landmarks[FaceLandmarkType.noseBase]!.position;
-    final mouth = face.landmarks[FaceLandmarkType.bottomMouth]!.position;
-
-    // Matematiksel Mesafe Hesaplama (Öklid)
-    double dist(Point<int> p1, Point<int> p2) {
-      return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
-    }
-
-    // Referans uzaklık (İki göz arası). 
-    // Kameraya yakınlaşıp uzaklaşınca değerler değişmesin diye buna böleceğiz.
-    double baseDist = dist(leftEye, rightEye);
-    if (baseDist == 0) baseDist = 1.0;
-
-    // Yüz Öznitelikleri (Oranlar)
-    return [
-      dist(leftEye, nose) / baseDist,      // Sol Göz - Burun oranı
-      dist(rightEye, nose) / baseDist,     // Sağ Göz - Burun oranı
-      dist(leftEye, mouth) / baseDist,     // Sol Göz - Ağız oranı
-      dist(rightEye, mouth) / baseDist,    // Sağ Göz - Ağız oranı
-      dist(nose, mouth) / baseDist,        // Burun - Ağız oranı
-    ];
-  }
+  
 
   // ===========================================================================
   // === UI VE YARDIMCI ===
