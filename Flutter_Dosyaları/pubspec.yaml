@@ -1,15 +1,14 @@
-# 1. Bu alanlar eksik (veya hatalı yerleştirilmiş)
-name: my_awesome_project # <-- BU ALAN ZORUNLU! (Boşluksuz, küçük harf kullanın)
+name: my_awesome_project 
 description: "A new Flutter project."
-publish_to: 'none' # Bu satırı eklemek, paketin yanlışlıkla yayınlanmasını engeller
+publish_to: 'none' 
 version: 1.0.0+1
 
-# 2. Environment (Sizde var)
+
 environment:
-  sdk: '>=3.2.0 <4.0.0' # SDK aralığını böyle belirtmek daha iyidir
+  sdk: '>=3.2.0 <4.0.0' 
   flutter: '>=3.22.0'
 
-# 3. Dependencies (Sizde var, düzeltilmiş hali)
+
 dependencies:
   flutter:
     sdk: flutter
@@ -17,7 +16,7 @@ dependencies:
   image: ^4.1.7   # Görüntü işleme için
   camera: ^0.11.2+1 # Kameraya erişim için
   http: ^1.1.0       # Gemini API ile HTTP istekleri için
-  path_provider: ^2.1.1 # Geçici dosya yazmak için (isteğe bağlı)
+  path_provider: ^2.1.1 # Geçici dosya yazmak için
   speech_to_text: ^7.3.0 # Konuşmayı metne çevirme için
   flutter_tts: ^4.2.3   # Metni sese dönüştürme için
   permission_handler: ^12.0.1
@@ -29,35 +28,22 @@ dependencies:
   firebase_vertexai: ^2.2.0 # Firebase Vertex AI için
   googleapis_auth: ^2.0.0
   googleapis: ^15.0.0
- 
-  
-  
   firebase_storage: ^13.0.5 # Firebase Storage için
-
   tflite_flutter: ^0.12.1  # TFLite motoru
-
-  # TFLite (Local AI)
-
   
-  #flutter_reactive_ble: ^5.2.0
-  #flutter_blue_plus: ^1.10.4
 
-
-
-# 4. Dev Dependencies (Sizde var)
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  
 
-# 5. Flutter'a özel bölüm (Genellikle en alttadır)
 flutter:
   uses-material-design: true 
-  # assets:
-  #   - images/a_dot_burr.jpeg
   assets:
     - assets/labels.txt
     - assets/models/ssd_mobilenet.tflite
     - assets/service_account.json
     - assets/mobilefacenet.tflite
+
  
