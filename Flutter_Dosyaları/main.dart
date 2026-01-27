@@ -12,13 +12,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart'; 
 import 'package:image/image.dart' as img_lib;
-
 import 'firebase_options.dart';
 import 'services/gemini_service.dart';
 import 'services/vision_service.dart';
 import 'services/hardware_service.dart';
 import 'services/voice_service.dart';
-import 'services/face_service.dart'; // FaceService'i aktif kullanacağız
+import 'services/face_service.dart';
 import 'core/robot_state.dart';
 
 List<CameraDescription> cameras = [];
@@ -96,11 +95,10 @@ class _AiTestScreenState extends State<AiTestScreen> {
   void initState() {
     super.initState();
     
-    // DÜZELTME: enableLandmarks: true YAPILDI
     final options = FaceDetectorOptions(
       enableClassification: false,
       enableContours: false,
-      enableLandmarks: true, // <--- BU ÇOK ÖNEMLİ
+      enableLandmarks: true,
       enableTracking: true,
       performanceMode: FaceDetectorMode.accurate, 
     );
@@ -123,7 +121,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
     await _requestPermissions();
     
     if (mounted) {
-      // Değişiklik: Başlatma sonucunu kontrol et
+    
       bool isGeminiReady = await _geminiService.initialize(DefaultAssetBundle.of(context));
       
       if (isGeminiReady) {
@@ -161,7 +159,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
   }
 
   // ===========================================================================
-  // === 1. OTONOM DEVRİYE ===
+  //       1. OTONOM DEVRİYE
   // ===========================================================================
 
   void _toggleAutonomousMode() {
@@ -188,7 +186,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
 
   void _startPatrolLoop() {
     _patrolLoopTimer?.cancel();
-    // Düzeltme: Süre 3 saniyeden 4 saniyeye çıkarıldı (Gemini gecikmesi payı)
+   
     _patrolLoopTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
       
       if (!_isPatrolMode) { timer.cancel(); return; }
@@ -225,7 +223,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
         }
 
       } catch (e) {
-        // DÜZELTME: Hata anında güvenlik protokolü
+        
         print("KRİTİK HATA: $e");
         setState(() => _statusMessage = "Hata: Güvenli moda geçildi.");
         _sendCommandToArduino("DUR"); // Fiziksel olarak dur
@@ -240,7 +238,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
   }
 
   // ===========================================================================
-  // === 2. NAVİGASYON ===
+  //          2. NAVİGASYON
   // ===========================================================================
 
   Future<void> _handleNavigation(String imagePath) async {
@@ -290,7 +288,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
       _moveRobot("dur");
       // Eğer hata metninde 429 geçiyorsa
       if (e.toString().contains("429")) {
-        print("⚠️ KOTA AŞIMI! Robot 1 dakika dinleniyor...");
+        print("KOTA AŞIMI! Robot 1 dakika dinleniyor...");
         _voiceService.speak("Çok yoruldum, sistemlerimi soğutuyorum.");
         
         // Geçici olarak devriyeyi durdur
@@ -326,11 +324,11 @@ class _AiTestScreenState extends State<AiTestScreen> {
 
 
   // ===========================================================================
-  // === 3. GÖRSEL HAFIZA VE SOHBET ===
+  //         3. GÖRSEL HAFIZA VE SOHBET
   // ===========================================================================
 
   Future<void> _handleHumanEncounter(String imagePath) async {
-    print("🛑 İnsan prosedürü başlatılıyor...");
+    print("İnsan prosedürü başlatılıyor...");
     
     _patrolLoopTimer?.cancel();
     _patrolLoopTimer = null;
@@ -355,8 +353,8 @@ class _AiTestScreenState extends State<AiTestScreen> {
 
     Face detectedFace = faces.first;
 
-    // --- DÜZELTME: Kafa Açısı Kontrolü ---
-    // Eğer kişi sağa/sola çok bakıyorsa (HeadEulerAngleY)
+    // --- Kafa Açısı Kontrolü ---
+    // Eğer kişi sağa/sola çok bakıyorsa
     double? rotY = detectedFace.headEulerAngleY; 
     if (rotY != null && (rotY > 15 || rotY < -15)) {
        await _voiceService.speak("Lütfen bana doğru bakar mısın? Yüzünü tam göremiyorum.");
@@ -376,7 +374,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
     }
 
     // Veritabanından Kontrol
-    print("🔍 Yüz İmzası (Temiz): $realEmbedding");
+    print("Yüz İmzası (Temiz): $realEmbedding");
     String? recognizedUser = await _faceService.recognizeFace(realEmbedding);
 
     if (recognizedUser != null) {
@@ -437,7 +435,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
       String cleanText = text.toLowerCase();
       print("Duyulan: $cleanText");
 
-      // --- 1. ÖZEL KOMUTLAR (Gemini'ye gitmeden çalışır) ---
+      //        1. ÖZEL KOMUTLAR (Gemini'ye gitmeden çalışır)
       
       // Anahtar Kelimeler: "komut" veya "robot"
       if (cleanText.contains("komut") || cleanText.contains("robot")) {
@@ -469,7 +467,7 @@ class _AiTestScreenState extends State<AiTestScreen> {
         return;
       }
 
-      // --- 2. OTONOM MODA GEÇİŞ (Sesle) ---
+      //        2. OTONOM MODA GEÇİŞ (Sesle)
       // "Devriyeye başla", "Otonom moda geç", "İşine dön"
       if (cleanText.contains("devriye") || 
           cleanText.contains("otonom") || 
@@ -482,14 +480,14 @@ class _AiTestScreenState extends State<AiTestScreen> {
         return; 
       }
 
-      // --- 3. SOHBETİ BİTİRME ---
+      //       3. SOHBETİ BİTİRME
       if (cleanText.contains("güle güle") || cleanText.contains("bay bay") || cleanText.contains("kapat") || cleanText.contains("çıkış yap")) {
         await _voiceService.speak("Görüşmek üzere.");
         _returnToPatrol(turnAway: true);
         return;
       }
 
-      // --- 4. GEMINI AI (Normal Sohbet) ---
+      //       4. GEMINI AI (Normal Sohbet)
       // Yukarıdaki komutlar yoksa yapay zekaya sor
       String chatPrompt = "$text. (Kısa ve öz cevap ver)";
       
@@ -512,11 +510,11 @@ class _AiTestScreenState extends State<AiTestScreen> {
   }
 
   // ===========================================================================
-  // === 4. DEVRİYEYE DÖNÜŞ (TAKILMAYI ÖNLEYEN MANTIK) ===
+  //           4. DEVRİYEYE DÖNÜŞ (TAKILMAYI ÖNLEYEN MANTIK) 
   // ===========================================================================
 
   void _returnToPatrol({bool turnAway = false}) async {
-    print("🔄 Devriyeye dönülüyor...");
+    print("Devriyeye dönülüyor...");
     
     setState(() {
       _isChatting = false;
@@ -544,12 +542,8 @@ class _AiTestScreenState extends State<AiTestScreen> {
     }
   }
 
-  // --- YÜZ İMZASI OLUŞTURUCU ---
-
-  
-
   // ===========================================================================
-  // === UI VE YARDIMCI ===
+  //         UI VE YARDIMCI
   // ===========================================================================
 
   void _sendCommandToArduino(String command) {
@@ -706,3 +700,4 @@ class _AiTestScreenState extends State<AiTestScreen> {
     );
   }
 }
+
